@@ -1,65 +1,111 @@
-import Head from 'next/head'
-import styles from '../styles/Home.module.css'
+import React, { Component } from 'react';
+import { inject, observer } from 'mobx-react';
+import Router from 'next/router'
+import Cookies from "js-cookie";
 
-export default function Home() {
-  return (
-    <div className={styles.container}>
-      <Head>
-        <title>Create Next App</title>
-        <link rel="icon" href="/favicon.ico" />
-      </Head>
+import PropTypes from "prop-types";
+import ErrorComponent from '../components/ErrorComponent';
+@inject("authStore")
 
-      <main className={styles.main}>
-        <h1 className={styles.title}>
-          Welcome to <a href="https://nextjs.org">Next.js!</a>
-        </h1>
+@observer
+class Login extends Component {
 
-        <p className={styles.description}>
-          Get started by editing{' '}
-          <code className={styles.code}>pages/index.js</code>
-        </p>
+  static propTypes = {
+    
+    history: PropTypes.object
+  }
+  constructor(props){
+   super(props)
+   
+   this.state={
+     showError:false
+   }
+  }
 
-        <div className={styles.grid}>
-          <a href="https://nextjs.org/docs" className={styles.card}>
-            <h3>Documentation &rarr;</h3>
-            <p>Find in-depth information about Next.js features and API.</p>
-          </a>
 
-          <a href="https://nextjs.org/learn" className={styles.card}>
-            <h3>Learn &rarr;</h3>
-            <p>Learn about Next.js in an interactive course with quizzes!</p>
-          </a>
 
-          <a
-            href="https://github.com/vercel/next.js/tree/master/examples"
-            className={styles.card}
-          >
-            <h3>Examples &rarr;</h3>
-            <p>Discover and deploy boilerplate example Next.js projects.</p>
-          </a>
+  componentWillUnmount() {
+    this.props.authStore.reset();
+  }
 
-          <a
-            href="https://vercel.com/import?filter=next.js&utm_source=create-next-app&utm_medium=default-template&utm_campaign=create-next-app"
-            className={styles.card}
-          >
-            <h3>Deploy &rarr;</h3>
-            <p>
-              Instantly deploy your Next.js site to a public URL with Vercel.
-            </p>
-          </a>
-        </div>
-      </main>
+  handleUsernameChange = e => {
+    this.props.authStore.setUsername(e.target.value);
+  };
 
-      <footer className={styles.footer}>
-        <a
-          href="https://vercel.com?utm_source=create-next-app&utm_medium=default-template&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Powered by{' '}
-          <img src="/vercel.svg" alt="Vercel Logo" className={styles.logo} />
-        </a>
-      </footer>
-    </div>
-  )
+  handlePasswordChange = e => {
+    this.props.authStore.setPassword(e.target.value);
+  };
+
+  handleSubmitForm = e => {
+    e.preventDefault();
+    this.props.authStore.login().then(() => {
+      if(this.props.authStore.errors === null) {
+        Cookies.set("username", this.props.authStore.values.username);
+        Router.push("/searchPage")
+      }
+        else this.setState({showError:true})
+      
+    }
+    );
+  };
+    render() {
+     
+       const { authStore:{ errors, inProgress} } = this.props;
+
+        return (
+            <div className="App">
+          
+        
+
+        <form onSubmit={this.handleSubmitForm}>
+        <div className="container" style={{maxWidth:"600px",left:"35%"}}>
+                <h2>Sign-In to StarWars</h2>
+                <p>
+                {this.state.showError &&    <ErrorComponent errors={errors} /> }
+                </p>
+                <p className="input-container">
+                  <input
+                                    
+                                    type="text"
+                                    placeholder="Username"
+                                    onChange={this.handleUsernameChange}
+                                    id="input-username" className="login-input"
+                                  />
+                  <label htmlFor="input-username" unselectable="on">Username</label>
+                </p>
+                <p className="input-container">
+                
+                  <input
+                                  
+                                    type="password"
+                                    placeholder="Password"
+                                    onChange={this.handlePasswordChange}
+                                    id="input-password" className="login-input"
+                                  />
+                  <label htmlFor="input-password" unselectable="on">Password</label>
+                </p>
+
+                <p className="input-container">
+                <button
+                                  className="btn btn-lg btn-primary pull-xs-right"
+                                  type="submit"
+                                  disabled={inProgress}
+                                >
+                                  Sign in
+                                </button>
+                </p>
+              </div>
+          </form>
+           
+
+            </div>
+
+
+
+        )
+    }
+
+
 }
+
+export default Login;
